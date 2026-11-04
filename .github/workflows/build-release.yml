@@ -8,13 +8,10 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: panzer-windows-release
-  cancel-in-progress: false
-
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -29,7 +26,9 @@ jobs:
         run: python -c "import zipfile; zipfile.ZipFile('LEDERG-PANZER-source.zip').extractall('.')"
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip; pip install -r requirements-dev.txt
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
 
       - name: Run test suite
         run: python -m unittest discover -s tests -v
@@ -37,7 +36,12 @@ jobs:
       - name: Build standalone Windows executable
         run: pyinstaller --noconfirm --clean --onefile --windowed --name LEDERG-PANZER --collect-all dns app.py
 
-      - name: Publish GitHub Release
+      - name: Verify executable exists
+        run: |
+          if (!(Test-Path "dist/LEDERG-PANZER.exe")) { throw "EXE was not produced" }
+          Get-Item "dist/LEDERG-PANZER.exe" | Format-List Name,Length
+
+      - name: Publish EXE as a GitHub Release asset
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v0.1.0
@@ -54,11 +58,14 @@ jobs:
 
             Free Windows 10/11 x64 defensive assessment toolkit.
 
-            - DNS: A, AAAA, MX, NS, TXT, CAA, SPF and DMARC
-            - HTTP: HTTPS, security headers, CORS and cookie flags
-            - TLS certificate validation and expiry
-            - Bounded TCP inventory of 38 common ports on one host
-            - Local SQLite history; HTML and JSON reports
-            - Russian interface and field guide
+            Download **LEDERG-PANZER.exe** below from Assets.
 
-            Only use against systems you own or have explicit permission to test. Findings require manual validation.
+            - DNS inventory and SPF/DMARC checks
+            - HTTP security headers and cookie review
+            - TLS certificate review
+            - Bounded TCP port inventory for one authorized host
+            - Local SQLite history; HTML and JSON reports
+            - Russian interface
+
+            Only assess systems you own or are explicitly authorized to test.
+            Automated findings require manual validation.
