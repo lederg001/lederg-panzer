@@ -1,4 +1,4 @@
-name: Windows EXE build and release
+name: LEDERG PANZER Windows x64 build and release
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -20,24 +20,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-          # The Python dependency files live inside LEDERG-PANZER-source.zip.
-          # setup-python pip caching runs before the ZIP is extracted, so omit cache here.
 
       - name: Extract source bundle
-        run: python -c "import zipfile; zipfile.ZipFile('LEDERG-PANZER-source.zip').extractall('.')"
-
-      - name: Upload extracted source for implementation work
-        uses: actions/upload-artifact@v4
-        with:
-          name: panzer-source-inspection
-          path: |
-            app.py
-            panzer/
-            tests/
-            requirements.txt
-            requirements-dev.txt
-          if-no-files-found: error
-          retention-days: 1
+        run: python -c "import zipfile; z=zipfile.ZipFile('LEDERG-PANZER-source.zip'); z.extractall('.'); z.close()"
 
       - name: Install dependencies
         run: |
@@ -48,19 +33,27 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Build standalone Windows executable
-        run: pyinstaller --noconfirm --clean --onefile --windowed --name LEDERG-PANZER --collect-all dns app.py
+        run: >-
+          pyinstaller --noconfirm --clean --onefile --windowed
+          --name LEDERG-PANZER
+          --collect-all dns
+          --collect-all psutil
+          app.py
 
       - name: Verify executable exists
+        shell: pwsh
         run: |
-          if (!(Test-Path "dist/LEDERG-PANZER.exe")) { throw "EXE was not produced" }
-          Get-Item "dist/LEDERG-PANZER.exe" | Format-List Name,Length
+          $exe = "dist/LEDERG-PANZER.exe"
+          if (!(Test-Path $exe)) { throw "EXE was not produced" }
+          $file = Get-Item $exe
+          if ($file.Length -lt 1000000) { throw "EXE is unexpectedly small: $($file.Length) bytes" }
+          Write-Host "Verified $($file.Name) ($($file.Length) bytes)"
 
-      - name: Publish EXE as a GitHub Release asset
-        if: false # Disabled during source inspection; re-enabled for v0.2.0
+      - name: Publish EXE to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: v0.1.0
-          name: LEDERG PANZER v0.1.0
+          tag_name: v0.2.0
+          name: LEDERG PANZER v0.2.0
           target_commitish: main
           draft: false
           prerelease: false
@@ -69,18 +62,21 @@ jobs:
           fail_on_unmatched_files: true
           files: dist/LEDERG-PANZER.exe
           body: |
-            # LEDERG PANZER v0.1.0
+            # LEDERG PANZER v0.2.0
 
-            Free Windows 10/11 x64 defensive assessment toolkit.
+            Free Windows 10/11 x64 defensive security toolkit.
 
-            Download **LEDERG-PANZER.exe** below from Assets.
+            Download **LEDERG-PANZER.exe** from Assets below.
 
-            - DNS inventory and SPF/DMARC checks
-            - HTTP security headers and cookie review
-            - TLS certificate review
-            - Bounded TCP port inventory for one authorized host
-            - Local SQLite history; HTML and JSON reports
-            - Russian interface
+            - Redesigned black/red interface, custom window controls and PANZER avatar
+            - Full TCP connect scan for ports 1–65535 on one authorized host
+            - DNS, HTTP security headers, cookies and TLS audit
+            - RDAP, Certificate Transparency and NVD CVE lookups
+            - Local Windows Firewall / Microsoft Defender status
+            - Confirmed local inbound IP block rule (administrator required)
+            - File hashes, secure password generator, ping and traceroute
+            - SQLite scan history and HTML/JSON reports
 
-            Only assess systems you own or are explicitly authorized to test.
-            Automated findings require manual validation.
+            Scope is limited to systems you own or are explicitly authorized to test.
+            No retaliatory attacks, DDoS, exploitation, password guessing or stealth features.
+            Findings require manual validation.

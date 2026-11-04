@@ -4,4 +4,6 @@ __pycache__/
 build/
 dist/
 *.spec
-panzer_history.db
+*.db
+*.sqlite*
+*.log

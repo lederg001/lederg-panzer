@@ -1,52 +1,63 @@
 # LEDERG PANZER
 
-**Free defensive security toolkit for Windows 10/11 x64.**
+**LEDERG PANZER v0.2.0 — бесплатный Windows x64 набор для разрешённого аудита и локальной защиты.**
 
-LEDERG PANZER helps administrators and learners review a single domain or IP address that they own or are explicitly authorized to test.
+Telegram: [канал @lederg_panzer](https://t.me/lederg_panzer) · [чат @lederg_panzer_chat](https://t.me/lederg_panzer_chat)
 
-> **Authorization required.** Only assess systems you own or have explicit permission to test. Mass scanning, disruption, exploitation, credential attacks and third-party access are out of scope.
+## Основные возможности
 
-## v0.1.0
-- DNS inventory: A, AAAA, MX, NS, TXT, CAA, SPF and DMARC.
-- Web configuration review: HTTPS availability, security headers, CORS, Server disclosure and cookie flags.
-- TLS certificate validation, issuer and expiry.
-- Bounded TCP connect check of 38 common ports on one resolved IP.
-- Local SQLite scan history; HTML and JSON reports.
-- Russian UI and built-in field guide.
-- No account, paid API or Python installation required for the Windows EXE.
+- Новый чёрно-красный интерфейс, панель окна LEDERG PANZER, аватар и боковая навигация.
+- Веб-аудит: DNS A/AAAA/MX/NS/TXT/CAA, SPF, DMARC, HTTPS, TLS-сертификат, HTTP Security Headers, CORS и cookie-флаги.
+- Полный TCP connect scan одного домена/IP по диапазону **1–65535**, с ограниченной параллельностью, прогрессом и остановкой.
+- OSINT: RDAP по IP/домену и пассивный поиск имён из Certificate Transparency через crt.sh.
+- Поиск CVE по продукту/поставщику через публичный NVD API.
+- Локальная инвентаризация Windows: сетевые интерфейсы, слушающие TCP-порты, состояние Windows Firewall и Microsoft Defender.
+- Быстрая проверка штатным Microsoft Defender; добавление явного входящего правила Windows Firewall для указанного IP (нужны права администратора).
+- Утилиты: SHA-256/SHA-1/MD5 файлов локально, криптографический генератор паролей, ping и traceroute.
+- Локальная история SQLite; экспорт отчётов HTML/JSON.
 
-## Download
-The Windows executable is published in [GitHub Releases](https://github.com/lederg001/lederg-panzer/releases). Download `LEDERG-PANZER.exe`. The build is produced on a Windows runner.
+## Сборка из исходников
 
-## Run from source
+Требуется Windows 10/11 x64 и Python 3.12.
+
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s tests -v
 python app.py
 ```
 
-Tests: `python -m unittest discover -s tests -v`
+Для сборки EXE:
 
-## Scope guardrails
-- One domain or one IP per assessment; URLs, paths, CIDRs, wildcards and target lists are rejected.
-- Operator authorization acknowledgement and a second target confirmation are required.
-- TCP checks use a fixed 38-port list with bounded concurrency and timeout.
-- Web review makes one bounded request to `/`; cross-host redirects are blocked.
-- No crawling, fuzzing, exploit payloads, password guessing, stealth, persistence or data extraction.
-- Open ports and missing headers are observations, not proof of exploitable vulnerabilities. Validate manually.
-- Findings and history remain on the local computer. The app writes an authorization confirmation log.
+```powershell
+pyinstaller --noconfirm --clean --onefile --windowed --name LEDERG-PANZER --collect-all dns --collect-all psutil app.py
+```
 
-## Roadmap
-1. Signed rule-pack updates and provenance.
-2. Import results from Nmap and OWASP ZAP passive/baseline scans.
-3. Asset inventory, project workspaces and scan comparisons.
-4. SBOM/dependency review.
-5. Plugin API with explicit capability and scope enforcement.
+## Область и безопасность
 
-## Project
-- Repository: https://github.com/lederg001/lederg-panzer
+- Запускайте тестирование только на системах, которыми владеете, или на цели с явным разрешением.
+- Один запуск работает с одним доменом или одним IP; CIDR, wildcard, списки целей и автоматическое сканирование обнаруженных поддоменов не выполняются.
+- Полный сканер выполняет TCP connect-проверки. Он не является SYN/stealth-сканером и не выполняет UDP-сканирование. Закрытый порт и порт, отфильтрованный firewall, не всегда можно отличить одним connect-методом.
+- OSINT использует публичные источники; найденные записи не означают наличие уязвимости.
+- Поиск CVE по ключевым словам не подтверждает уязвимость конкретной установленной версии.
+- Block IP создаёт входящее правило Windows Firewall только на локальном устройстве. Требуются права администратора и подтверждение пользователя.
+- Ответные атаки, DDoS, эксплуатация чужих систем, подбор паролей, скрытность, persistence и извлечение чужих данных не реализованы.
+- Автоматические предупреждения требуют ручной валидации.
+
+## Рекомендованные открытые инструменты
+
+- [Nmap](https://nmap.org/) — сетевая инвентаризация и TCP connect scan.
+- [OWASP ZAP](https://www.zaproxy.org/) — аудит веб-приложений; активные проверки применяйте только по согласованной программе.
+- [Wireshark](https://www.wireshark.org/) — анализ сетевого трафика.
+- [YARA](https://yara.readthedocs.io/) — поиск и классификация файлов по правилам.
+- [Microsoft Sysinternals](https://learn.microsoft.com/sysinternals/) — диагностика процессов и Windows.
+- [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — методология веб-тестирования.
+
+## Репозиторий и релизы
+
+- Source: https://github.com/lederg001/lederg-panzer
+- Releases: https://github.com/lederg001/lederg-panzer/releases
 - Maintainer: [@LEDERG_ru](https://t.me/LEDERG_ru)
 
-## License
-MIT. See LICENSE.
+Лицензия MIT — см. [LICENSE](LICENSE).
