@@ -20,7 +20,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-          cache: pip
+          # The Python dependency files live inside LEDERG-PANZER-source.zip.
+          # setup-python pip caching runs before the ZIP is extracted, so omit cache here.
 
       - name: Extract source bundle
         run: python -c "import zipfile; zipfile.ZipFile('LEDERG-PANZER-source.zip').extractall('.')"
